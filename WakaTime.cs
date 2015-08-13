@@ -8,10 +8,13 @@ namespace WakaTime
 {
 	/// <summary>The object for implementing an Add-in.</summary>
 	/// <seealso class='IDTExtensibility2' />
-	public class Connect : IDTExtensibility2, IDTCommandTarget
+	public class WakaTime : IDTExtensibility2, IDTCommandTarget
 	{
+        private DTE2 _applicationObject;
+        private AddIn _addInInstance;
+
 		/// <summary>Implements the constructor for the Add-in object. Place your initialization code within this method.</summary>
-		public Connect()
+		public WakaTime()
 		{
 		}
 
@@ -43,7 +46,7 @@ namespace WakaTime
 				try
 				{
 					//Add a command to the Commands collection:
-					Command command = commands.AddNamedCommand2(_addInInstance, "WakaTime", "WakaTime", "Executes the command for WakaTime", true, 59, ref contextGUIDS, (int)vsCommandStatus.vsCommandStatusSupported+(int)vsCommandStatus.vsCommandStatusEnabled, (int)vsCommandStyle.vsCommandStylePictAndText, vsCommandControlType.vsCommandControlTypeButton);
+					Command command = commands.AddNamedCommand2(_addInInstance, "WakaTime", "WakaTime", "WakaTime Settings", true, 59, ref contextGUIDS, (int)vsCommandStatus.vsCommandStatusSupported+(int)vsCommandStatus.vsCommandStatusEnabled, (int)vsCommandStyle.vsCommandStylePictAndText, vsCommandControlType.vsCommandControlTypeButton);
 
 					//Add a control for the command to the tools menu:
 					if((command != null) && (toolsPopup != null))
@@ -99,7 +102,7 @@ namespace WakaTime
 		{
 			if(neededText == vsCommandStatusTextWanted.vsCommandStatusTextWantedNone)
 			{
-				if(commandName == "WakaTime.Connect.ssmswakatime")
+				if(commandName == "WakaTime")
 				{
 					status = (vsCommandStatus)vsCommandStatus.vsCommandStatusSupported|vsCommandStatus.vsCommandStatusEnabled;
 					return;
@@ -119,14 +122,12 @@ namespace WakaTime
 			handled = false;
 			if(executeOption == vsCommandExecOption.vsCommandExecOptionDoDefault)
 			{
-				if(commandName == "WakaTime.Connect.ssmswakatime")
+				if(commandName == "WakaTime")
 				{
 					handled = true;
 					return;
 				}
 			}
-		}
-		private DTE2 _applicationObject;
-		private AddIn _addInInstance;
+		}		
 	}
 }

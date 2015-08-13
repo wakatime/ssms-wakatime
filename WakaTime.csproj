@@ -35,7 +35,8 @@
     <WarningLevel>4</WarningLevel>
     <IncrementalBuild>false</IncrementalBuild>
     <Prefer32Bit>false</Prefer32Bit>
-    <DocumentationFile>ssms-wakatime.xml</DocumentationFile>
+    <DocumentationFile>
+    </DocumentationFile>
   </PropertyGroup>
   <PropertyGroup>
     <RootNamespace>WakaTime</RootNamespace>
@@ -54,7 +55,7 @@
     <Compile Include="AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Connect.cs">
+    <Compile Include="WakaTime.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
