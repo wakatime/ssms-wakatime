@@ -1,21 +1,39 @@
 ﻿using System;
+using System.Reflection;
 using EnvDTE;
 using EnvDTE80;
 using Extensibility;
 using Microsoft.VisualStudio.CommandBars;
+using Thread = System.Threading.Thread;
 
 namespace WakaTime
 {
-	/// <summary>The object for implementing an Add-in.</summary>
+    /// <summary>The object for implementing an Add-in.</summary>
 	/// <seealso class='IDTExtensibility2' />
 	public class WakaTime : IDTExtensibility2, IDTCommandTarget
 	{
+        private static string _version = string.Empty;
+        private static string _editorVersion = string.Empty;
+
         private DTE2 _applicationObject;
         private AddIn _addInInstance;
+        private DocumentEvents _docEvents;
+        private WindowEvents _windowsEvents;
+
+        private static WakaTimeConfigFile _wakaTimeConfigFile;
+
+        public static bool Debug;
+        public static string ApiKey;
+        static readonly PythonCliParameters PythonCliParameters = new PythonCliParameters();
+        private static string _lastFile;
+        DateTime _lastHeartbeat = DateTime.UtcNow.AddMinutes(-3);
+        private static readonly object ThreadLock = new object();
 
 		/// <summary>Implements the constructor for the Add-in object. Place your initialization code within this method.</summary>
 		public WakaTime()
 		{
+            _version = string.Format("{0}.{1}.{2}", CoreAssembly.Version.Major, CoreAssembly.Version.Minor, CoreAssembly.Version.Build);
+            _wakaTimeConfigFile = new WakaTimeConfigFile();
 		}
 
 		/// <summary>Implements the OnConnection method of the IDTExtensibility2 interface. Receives notification that the Add-in is being loaded.</summary>
@@ -26,7 +44,15 @@ namespace WakaTime
 		public void OnConnection(object application, ext_ConnectMode connectMode, object addInInst, ref Array custom)
 		{
 			_applicationObject = (DTE2)application;
-			_addInInstance = (AddIn)addInInst;
+			_addInInstance = (AddIn)addInInst;                                    
+
+            _editorVersion = _applicationObject.Version;
+            _docEvents = _applicationObject.Events.DocumentEvents;
+            _docEvents.DocumentOpened += DocEventsOnDocumentOpened;
+            _docEvents.DocumentSaved += DocEventsOnDocumentSaved;
+		    _windowsEvents = _applicationObject.Events.WindowEvents;
+            _windowsEvents.WindowActivated += WindowsEventsOnWindowActivated;
+
 			if(connectMode == ext_ConnectMode.ext_cm_UISetup)
 			{
 				object []contextGUIDS = new object[] { };
@@ -35,7 +61,7 @@ namespace WakaTime
 
 				//Place the command on the tools menu.
 				//Find the MenuBar command bar, which is the top-level command bar holding all the main menu items:
-				Microsoft.VisualStudio.CommandBars.CommandBar menuBarCommandBar = ((Microsoft.VisualStudio.CommandBars.CommandBars)_applicationObject.CommandBars)["MenuBar"];
+				CommandBar menuBarCommandBar = ((CommandBars)_applicationObject.CommandBars)["MenuBar"];
 
 				//Find the Tools command bar on the MenuBar command bar:
 				CommandBarControl toolsControl = menuBarCommandBar.Controls[toolsMenuName];
@@ -54,16 +80,33 @@ namespace WakaTime
 						command.AddControl(toolsPopup.CommandBar, 1);
 					}
 				}
-				catch(System.ArgumentException)
+				catch(ArgumentException)
 				{
 					//If we are here, then the exception is probably because a command with that name
 					//  already exists. If so there is no need to recreate the command and we can 
                     //  safely ignore the exception.
 				}
 			}
+
+		    GetSettings();
 		}
 
-		/// <summary>Implements the OnDisconnection method of the IDTExtensibility2 interface. Receives notification that the Add-in is being unloaded.</summary>
+        private void WindowsEventsOnWindowActivated(Window gotFocus, Window lostFocus)
+        {
+            HandleActivity(gotFocus.Document.FullName, false);
+        }
+
+        private void DocEventsOnDocumentOpened(Document document)
+	    {
+	        HandleActivity(document.FullName, false);
+	    }
+
+        private void DocEventsOnDocumentSaved(Document document)
+        {
+            HandleActivity(document.FullName, true);
+        }
+
+	    /// <summary>Implements the OnDisconnection method of the IDTExtensibility2 interface. Receives notification that the Add-in is being unloaded.</summary>
 		/// <param term='disconnectMode'>Describes how the Add-in is being unloaded.</param>
 		/// <param term='custom'>Array of parameters that are host application specific.</param>
 		/// <seealso class='IDTExtensibility2' />
@@ -128,6 +171,69 @@ namespace WakaTime
 					return;
 				}
 			}
-		}		
+		}
+
+        private static void GetSettings()
+        {
+            ApiKey = _wakaTimeConfigFile.ApiKey;
+            Debug = _wakaTimeConfigFile.Debug;
+        }
+
+	    private void HandleActivity(string currentFile, bool isWrite)
+	    {
+            if (currentFile == null) return;
+
+            var thread = new Thread(
+                delegate()
+                {
+                    lock (ThreadLock)
+                    {
+                        if (!isWrite && _lastFile != null && !EnoughTimePassed() && currentFile.Equals(_lastFile))
+                            return;
+
+                        SendHeartbeat(currentFile, isWrite);
+                        _lastFile = currentFile;
+                        _lastHeartbeat = DateTime.UtcNow;
+                    }
+                });
+            thread.Start();
+	    }
+
+        private bool EnoughTimePassed()
+        {
+            return _lastHeartbeat < DateTime.UtcNow.AddMinutes(-1);
+        }
+
+        public static void SendHeartbeat(string fileName, bool isWrite)
+        {
+            PythonCliParameters.Key = ApiKey;
+            PythonCliParameters.File = fileName;
+            PythonCliParameters.Plugin = string.Format("{0}/{1} {2}/{3}", WakaTimeConstants.EditorName, _editorVersion, WakaTimeConstants.PluginName, _version);
+            PythonCliParameters.IsWrite = isWrite;
+            //PythonCliParameters.Project = GetProjectName();
+
+            var pythonBinary = PythonManager.GetPython();
+            if (pythonBinary != null)
+            {
+                var process = new RunProcess(pythonBinary, PythonCliParameters.ToArray());
+                if (Debug)
+                {
+                    Logger.Debug(string.Format("[\"{0}\", \"{1}\"]", pythonBinary, string.Join("\", \"", PythonCliParameters.ToArray(true))));
+                    process.Run();
+                    Logger.Debug(string.Format("CLI STDOUT: {0}", process.Output));
+                    Logger.Debug(string.Format("CLI STDERR: {0}", process.Error));
+                }
+                else
+                    process.RunInBackground();
+            }
+            else
+                Logger.Error("Could not send heartbeat because python is not installed");
+        }        
 	}
+
+    static class CoreAssembly
+    {
+        static readonly Assembly Reference = typeof(CoreAssembly).Assembly;
+        public static readonly Version Version = Reference.GetName().Version;
+    }
 }
