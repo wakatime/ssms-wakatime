@@ -1,9 +1,11 @@
 ﻿using System;
+using System.IO;
 using System.Reflection;
 using EnvDTE;
 using EnvDTE80;
 using Extensibility;
 using Microsoft.VisualStudio.CommandBars;
+using WakaTime.Forms;
 using Thread = System.Threading.Thread;
 
 namespace WakaTime
@@ -43,67 +45,121 @@ namespace WakaTime
 		/// <seealso class='IDTExtensibility2' />
 		public void OnConnection(object application, ext_ConnectMode connectMode, object addInInst, ref Array custom)
 		{
-			_applicationObject = (DTE2)application;
-			_addInInstance = (AddIn)addInInst;                                    
+            Logger.Debug(string.Format("Initializing WakaTime v{0}", _version));
 
-            _editorVersion = _applicationObject.Version;
-            _docEvents = _applicationObject.Events.DocumentEvents;
-            _docEvents.DocumentOpened += DocEventsOnDocumentOpened;
-            _docEvents.DocumentSaved += DocEventsOnDocumentSaved;
-		    _windowsEvents = _applicationObject.Events.WindowEvents;
-            _windowsEvents.WindowActivated += WindowsEventsOnWindowActivated;
+		    try
+		    {
+                _applicationObject = (DTE2)application;
+                _addInInstance = (AddIn)addInInst;                
 
-			if(connectMode == ext_ConnectMode.ext_cm_UISetup)
-			{
-				object []contextGUIDS = new object[] { };
-				Commands2 commands = (Commands2)_applicationObject.Commands;
-				string toolsMenuName = "Tools";
+                _editorVersion = _applicationObject.Version;
+                _docEvents = _applicationObject.Events.DocumentEvents;
+                _docEvents.DocumentOpened += DocEventsOnDocumentOpened;
+                _docEvents.DocumentSaved += DocEventsOnDocumentSaved;
+                _windowsEvents = _applicationObject.Events.WindowEvents;
+                _windowsEvents.WindowActivated += WindowsEventsOnWindowActivated;
 
-				//Place the command on the tools menu.
-				//Find the MenuBar command bar, which is the top-level command bar holding all the main menu items:
-				CommandBar menuBarCommandBar = ((CommandBars)_applicationObject.CommandBars)["MenuBar"];
+                if (connectMode == ext_ConnectMode.ext_cm_UISetup)
+                {
+                    object[] contextGUIDS = new object[] { };
+                    Commands2 commands = (Commands2)_applicationObject.Commands;
+                    string toolsMenuName = "Tools";
 
-				//Find the Tools command bar on the MenuBar command bar:
-				CommandBarControl toolsControl = menuBarCommandBar.Controls[toolsMenuName];
-				CommandBarPopup toolsPopup = (CommandBarPopup)toolsControl;
+                    //Place the command on the tools menu.
+                    //Find the MenuBar command bar, which is the top-level command bar holding all the main menu items:
+                    CommandBar menuBarCommandBar = ((CommandBars)_applicationObject.CommandBars)["MenuBar"];
 
-				//This try/catch block can be duplicated if you wish to add multiple commands to be handled by your Add-in,
-				//  just make sure you also update the QueryStatus/Exec method to include the new command names.
-				try
-				{
-					//Add a command to the Commands collection:
-					Command command = commands.AddNamedCommand2(_addInInstance, "WakaTime", "WakaTime", "WakaTime Settings", true, 59, ref contextGUIDS, (int)vsCommandStatus.vsCommandStatusSupported+(int)vsCommandStatus.vsCommandStatusEnabled, (int)vsCommandStyle.vsCommandStylePictAndText, vsCommandControlType.vsCommandControlTypeButton);
+                    //Find the Tools command bar on the MenuBar command bar:
+                    CommandBarControl toolsControl = menuBarCommandBar.Controls[toolsMenuName];
+                    CommandBarPopup toolsPopup = (CommandBarPopup)toolsControl;
 
-					//Add a control for the command to the tools menu:
-					if((command != null) && (toolsPopup != null))
-					{
-						command.AddControl(toolsPopup.CommandBar, 1);
-					}
-				}
-				catch(ArgumentException)
-				{
-					//If we are here, then the exception is probably because a command with that name
-					//  already exists. If so there is no need to recreate the command and we can 
-                    //  safely ignore the exception.
-				}
-			}
+                    //This try/catch block can be duplicated if you wish to add multiple commands to be handled by your Add-in,
+                    //  just make sure you also update the QueryStatus/Exec method to include the new command names.
+                    try
+                    {
+                        //Add a command to the Commands collection:
+                        Command command = commands.AddNamedCommand2(_addInInstance, "WakaTime", "WakaTime", "WakaTime Settings", true, 59, ref contextGUIDS, (int)vsCommandStatus.vsCommandStatusSupported + (int)vsCommandStatus.vsCommandStatusEnabled, (int)vsCommandStyle.vsCommandStylePictAndText, vsCommandControlType.vsCommandControlTypeButton);
 
-		    GetSettings();
+                        //Add a control for the command to the tools menu:
+                        if ((command != null) && (toolsPopup != null))
+                        {
+                            command.AddControl(toolsPopup.CommandBar, 1);
+                        }
+                    }
+                    catch (ArgumentException)
+                    {
+                        //If we are here, then the exception is probably because a command with that name
+                        //  already exists. If so there is no need to recreate the command and we can 
+                        //  safely ignore the exception.
+                    }
+                }
+
+                // Make sure python is installed
+                if (!PythonManager.IsPythonInstalled())
+                {
+                    var url = PythonManager.GetPythonDownloadUrl();
+                    Downloader.DownloadPython(url, WakaTimeConstants.UserConfigDir);
+                }
+
+                if (!DoesCliExist() || !IsCliLatestVersion())
+                {
+                    try
+                    {
+                        Directory.Delete(string.Format("{0}\\wakatime-master", WakaTimeConstants.UserConfigDir), true);
+                    }
+                    catch { /* ignored */ }
+
+                    Downloader.DownloadCli(WakaTimeConstants.CliUrl, WakaTimeConstants.UserConfigDir);
+                }
+
+                GetSettings();
+
+                if (string.IsNullOrEmpty(ApiKey))
+                    PromptApiKey();
+
+                Logger.Info(string.Format("Finished initializing WakaTime v{0}", _version));
+		    }
+		    catch (Exception ex)
+		    {
+                Logger.Error("Error initializing Wakatime", ex);
+		    }			
 		}
 
         private void WindowsEventsOnWindowActivated(Window gotFocus, Window lostFocus)
         {
-            HandleActivity(gotFocus.Document.FullName, false);
+            try
+            {
+                if (gotFocus.Document != null)
+                    HandleActivity(gotFocus.Document.FullName, false);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("WindowsEventsOnWindowActivated", ex);
+            }
         }
 
         private void DocEventsOnDocumentOpened(Document document)
 	    {
-	        HandleActivity(document.FullName, false);
+            try
+            {
+                HandleActivity(document.FullName, false);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("DocEventsOnDocumentOpened", ex);
+            }
 	    }
 
         private void DocEventsOnDocumentSaved(Document document)
         {
-            HandleActivity(document.FullName, true);
+            try
+            {
+                HandleActivity(document.FullName, true);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("DocEventsOnDocumentSaved", ex);
+            }
         }
 
 	    /// <summary>Implements the OnDisconnection method of the IDTExtensibility2 interface. Receives notification that the Add-in is being unloaded.</summary>
@@ -172,6 +228,25 @@ namespace WakaTime
 				}
 			}
 		}
+
+        private static void PromptApiKey()
+        {
+            var form = new ApiKeyForm();
+            form.ShowDialog();
+        }
+
+        static bool DoesCliExist()
+        {
+            return File.Exists(PythonCliParameters.Cli);
+        }
+
+        static bool IsCliLatestVersion()
+        {
+            var process = new RunProcess(PythonManager.GetPython(), PythonCliParameters.Cli, "--version");
+            process.Run();
+
+            return process.Success && process.Error.Equals(WakaTimeConstants.CurrentWakaTimeCliVersion);
+        }
 
         private static void GetSettings()
         {

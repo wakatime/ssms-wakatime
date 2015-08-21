@@ -10,5 +10,15 @@ namespace WakaTime
         internal const string EditorName = "ssms";
         internal const string CliFolder = @"wakatime-master\wakatime\cli.py";
         internal static string UserConfigDir = Application.UserAppDataPath;
+        //internal static Func<string> UserConfigDir = () =>
+        //{
+        //    var path = Directory.GetParent(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)).FullName;
+        //    if (Environment.OSVersion.Version.Major >= 6)
+        //    {
+        //        path = Directory.GetParent(path).ToString();
+        //    }
+
+        //    return path;
+        //};
     }
 }
