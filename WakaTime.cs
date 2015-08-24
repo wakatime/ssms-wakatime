@@ -6,14 +6,14 @@ using EnvDTE80;
 using Extensibility;
 using Microsoft.VisualStudio.CommandBars;
 using WakaTime.Forms;
-using Thread = System.Threading.Thread;
+using Task = System.Threading.Tasks.Task;
 
 namespace WakaTime
 {
     /// <summary>The object for implementing an Add-in.</summary>
-	/// <seealso class='IDTExtensibility2' />
-	public class WakaTime : IDTExtensibility2, IDTCommandTarget
-	{
+    /// <seealso class='IDTExtensibility2' />
+    public class WakaTime : IDTExtensibility2, IDTCommandTarget
+    {
         private static string _version = string.Empty;
         private static string _editorVersion = string.Empty;
 
@@ -31,26 +31,26 @@ namespace WakaTime
         DateTime _lastHeartbeat = DateTime.UtcNow.AddMinutes(-3);
         private static readonly object ThreadLock = new object();
 
-		/// <summary>Implements the constructor for the Add-in object. Place your initialization code within this method.</summary>
-		public WakaTime()
-		{
+        /// <summary>Implements the constructor for the Add-in object. Place your initialization code within this method.</summary>
+        public WakaTime()
+        {
             _version = string.Format("{0}.{1}.{2}", CoreAssembly.Version.Major, CoreAssembly.Version.Minor, CoreAssembly.Version.Build);
             _wakaTimeConfigFile = new WakaTimeConfigFile();
-		}
+        }
 
-		/// <summary>Implements the OnConnection method of the IDTExtensibility2 interface. Receives notification that the Add-in is being loaded.</summary>
-		/// <param term='application'>Root object of the host application.</param>
-		/// <param term='connectMode'>Describes how the Add-in is being loaded.</param>
-		/// <param term='addInInst'>Object representing this Add-in.</param>
-		/// <seealso class='IDTExtensibility2' />
-		public void OnConnection(object application, ext_ConnectMode connectMode, object addInInst, ref Array custom)
-		{
-            Logger.Debug(string.Format("Initializing WakaTime v{0}", _version));
+        /// <summary>Implements the OnConnection method of the IDTExtensibility2 interface. Receives notification that the Add-in is being loaded.</summary>
+        /// <param term='application'>Root object of the host application.</param>
+        /// <param term='connectMode'>Describes how the Add-in is being loaded.</param>
+        /// <param term='addInInst'>Object representing this Add-in.</param>
+        /// <seealso class='IDTExtensibility2' />
+        public void OnConnection(object application, ext_ConnectMode connectMode, object addInInst, ref Array custom)
+        {
+            Logger.Info(string.Format("Initializing WakaTime v{0}", _version));
 
-		    try
-		    {
+            try
+            {
                 _applicationObject = (DTE2)application;
-                _addInInstance = (AddIn)addInInst;                
+                _addInInstance = (AddIn)addInInst;
 
                 _editorVersion = _applicationObject.Version;
                 _docEvents = _applicationObject.Events.DocumentEvents;
@@ -97,7 +97,7 @@ namespace WakaTime
                 // Make sure python is installed
                 if (!PythonManager.IsPythonInstalled())
                 {
-                    var url = PythonManager.GetPythonDownloadUrl();
+                    var url = PythonManager.PythonDownloadUrl;
                     Downloader.DownloadPython(url, WakaTimeConstants.UserConfigDir);
                 }
 
@@ -118,12 +118,12 @@ namespace WakaTime
                     PromptApiKey();
 
                 Logger.Info(string.Format("Finished initializing WakaTime v{0}", _version));
-		    }
-		    catch (Exception ex)
-		    {
+            }
+            catch (Exception ex)
+            {
                 Logger.Error("Error initializing Wakatime", ex);
-		    }			
-		}
+            }
+        }
 
         private void WindowsEventsOnWindowActivated(Window gotFocus, Window lostFocus)
         {
@@ -139,7 +139,7 @@ namespace WakaTime
         }
 
         private void DocEventsOnDocumentOpened(Document document)
-	    {
+        {
             try
             {
                 HandleActivity(document.FullName, false);
@@ -148,7 +148,7 @@ namespace WakaTime
             {
                 Logger.Error("DocEventsOnDocumentOpened", ex);
             }
-	    }
+        }
 
         private void DocEventsOnDocumentSaved(Document document)
         {
@@ -162,72 +162,72 @@ namespace WakaTime
             }
         }
 
-	    /// <summary>Implements the OnDisconnection method of the IDTExtensibility2 interface. Receives notification that the Add-in is being unloaded.</summary>
-		/// <param term='disconnectMode'>Describes how the Add-in is being unloaded.</param>
-		/// <param term='custom'>Array of parameters that are host application specific.</param>
-		/// <seealso class='IDTExtensibility2' />
-		public void OnDisconnection(ext_DisconnectMode disconnectMode, ref Array custom)
-		{
-		}
+        /// <summary>Implements the OnDisconnection method of the IDTExtensibility2 interface. Receives notification that the Add-in is being unloaded.</summary>
+        /// <param term='disconnectMode'>Describes how the Add-in is being unloaded.</param>
+        /// <param term='custom'>Array of parameters that are host application specific.</param>
+        /// <seealso class='IDTExtensibility2' />
+        public void OnDisconnection(ext_DisconnectMode disconnectMode, ref Array custom)
+        {
+        }
 
-		/// <summary>Implements the OnAddInsUpdate method of the IDTExtensibility2 interface. Receives notification when the collection of Add-ins has changed.</summary>
-		/// <param term='custom'>Array of parameters that are host application specific.</param>
-		/// <seealso class='IDTExtensibility2' />		
-		public void OnAddInsUpdate(ref Array custom)
-		{
-		}
+        /// <summary>Implements the OnAddInsUpdate method of the IDTExtensibility2 interface. Receives notification when the collection of Add-ins has changed.</summary>
+        /// <param term='custom'>Array of parameters that are host application specific.</param>
+        /// <seealso class='IDTExtensibility2' />		
+        public void OnAddInsUpdate(ref Array custom)
+        {
+        }
 
-		/// <summary>Implements the OnStartupComplete method of the IDTExtensibility2 interface. Receives notification that the host application has completed loading.</summary>
-		/// <param term='custom'>Array of parameters that are host application specific.</param>
-		/// <seealso class='IDTExtensibility2' />
-		public void OnStartupComplete(ref Array custom)
-		{
-		}
+        /// <summary>Implements the OnStartupComplete method of the IDTExtensibility2 interface. Receives notification that the host application has completed loading.</summary>
+        /// <param term='custom'>Array of parameters that are host application specific.</param>
+        /// <seealso class='IDTExtensibility2' />
+        public void OnStartupComplete(ref Array custom)
+        {
+        }
 
-		/// <summary>Implements the OnBeginShutdown method of the IDTExtensibility2 interface. Receives notification that the host application is being unloaded.</summary>
-		/// <param term='custom'>Array of parameters that are host application specific.</param>
-		/// <seealso class='IDTExtensibility2' />
-		public void OnBeginShutdown(ref Array custom)
-		{
-		}
-		
-		/// <summary>Implements the QueryStatus method of the IDTCommandTarget interface. This is called when the command's availability is updated</summary>
-		/// <param term='commandName'>The name of the command to determine state for.</param>
-		/// <param term='neededText'>Text that is needed for the command.</param>
-		/// <param term='status'>The state of the command in the user interface.</param>
-		/// <param term='commandText'>Text requested by the neededText parameter.</param>
-		/// <seealso class='Exec' />
-		public void QueryStatus(string commandName, vsCommandStatusTextWanted neededText, ref vsCommandStatus status, ref object commandText)
-		{
-			if(neededText == vsCommandStatusTextWanted.vsCommandStatusTextWantedNone)
-			{
-				if(commandName == "WakaTime")
-				{
-					status = (vsCommandStatus)vsCommandStatus.vsCommandStatusSupported|vsCommandStatus.vsCommandStatusEnabled;
-					return;
-				}
-			}
-		}
+        /// <summary>Implements the OnBeginShutdown method of the IDTExtensibility2 interface. Receives notification that the host application is being unloaded.</summary>
+        /// <param term='custom'>Array of parameters that are host application specific.</param>
+        /// <seealso class='IDTExtensibility2' />
+        public void OnBeginShutdown(ref Array custom)
+        {
+        }
 
-		/// <summary>Implements the Exec method of the IDTCommandTarget interface. This is called when the command is invoked.</summary>
-		/// <param term='commandName'>The name of the command to execute.</param>
-		/// <param term='executeOption'>Describes how the command should be run.</param>
-		/// <param term='varIn'>Parameters passed from the caller to the command handler.</param>
-		/// <param term='varOut'>Parameters passed from the command handler to the caller.</param>
-		/// <param term='handled'>Informs the caller if the command was handled or not.</param>
-		/// <seealso class='Exec' />
-		public void Exec(string commandName, vsCommandExecOption executeOption, ref object varIn, ref object varOut, ref bool handled)
-		{
-			handled = false;
-			if(executeOption == vsCommandExecOption.vsCommandExecOptionDoDefault)
-			{
-				if(commandName == "WakaTime")
-				{
-					handled = true;
-					return;
-				}
-			}
-		}
+        /// <summary>Implements the QueryStatus method of the IDTCommandTarget interface. This is called when the command's availability is updated</summary>
+        /// <param term='commandName'>The name of the command to determine state for.</param>
+        /// <param term='neededText'>Text that is needed for the command.</param>
+        /// <param term='status'>The state of the command in the user interface.</param>
+        /// <param term='commandText'>Text requested by the neededText parameter.</param>
+        /// <seealso class='Exec' />
+        public void QueryStatus(string commandName, vsCommandStatusTextWanted neededText, ref vsCommandStatus status, ref object commandText)
+        {
+            if (neededText == vsCommandStatusTextWanted.vsCommandStatusTextWantedNone)
+            {
+                if (commandName == "WakaTime")
+                {
+                    status = (vsCommandStatus)vsCommandStatus.vsCommandStatusSupported | vsCommandStatus.vsCommandStatusEnabled;
+                    return;
+                }
+            }
+        }
+
+        /// <summary>Implements the Exec method of the IDTCommandTarget interface. This is called when the command is invoked.</summary>
+        /// <param term='commandName'>The name of the command to execute.</param>
+        /// <param term='executeOption'>Describes how the command should be run.</param>
+        /// <param term='varIn'>Parameters passed from the caller to the command handler.</param>
+        /// <param term='varOut'>Parameters passed from the command handler to the caller.</param>
+        /// <param term='handled'>Informs the caller if the command was handled or not.</param>
+        /// <seealso class='Exec' />
+        public void Exec(string commandName, vsCommandExecOption executeOption, ref object varIn, ref object varOut, ref bool handled)
+        {
+            handled = false;
+            if (executeOption == vsCommandExecOption.vsCommandExecOptionDoDefault)
+            {
+                if (commandName == "WakaTime")
+                {
+                    handled = true;
+                    return;
+                }
+            }
+        }
 
         private static void PromptApiKey()
         {
@@ -245,7 +245,9 @@ namespace WakaTime
             var process = new RunProcess(PythonManager.GetPython(), PythonCliParameters.Cli, "--version");
             process.Run();
 
-            return process.Success && process.Error.Equals(WakaTimeConstants.CurrentWakaTimeCliVersion);
+            var wakatimeVersion = WakaTimeConstants.CurrentWakaTimeCliVersion();
+
+            return process.Success && process.Error.Equals(wakatimeVersion);            
         }
 
         private static void GetSettings()
@@ -254,25 +256,23 @@ namespace WakaTime
             Debug = _wakaTimeConfigFile.Debug;
         }
 
-	    private void HandleActivity(string currentFile, bool isWrite)
-	    {
+        private void HandleActivity(string currentFile, bool isWrite)
+        {
             if (currentFile == null) return;
 
-            var thread = new Thread(
-                delegate()
+            Task.Factory.StartNew(() =>
+            {
+                lock (ThreadLock)
                 {
-                    lock (ThreadLock)
-                    {
-                        if (!isWrite && _lastFile != null && !EnoughTimePassed() && currentFile.Equals(_lastFile))
-                            return;
+                    if (!isWrite && _lastFile != null && !EnoughTimePassed() && currentFile.Equals(_lastFile))
+                        return;
 
-                        SendHeartbeat(currentFile, isWrite);
-                        _lastFile = currentFile;
-                        _lastHeartbeat = DateTime.UtcNow;
-                    }
-                });
-            thread.Start();
-	    }
+                    SendHeartbeat(currentFile, isWrite);
+                    _lastFile = currentFile;
+                    _lastHeartbeat = DateTime.UtcNow;
+                }
+            });
+        }
 
         private bool EnoughTimePassed()
         {
@@ -303,8 +303,8 @@ namespace WakaTime
             }
             else
                 Logger.Error("Could not send heartbeat because python is not installed");
-        }        
-	}
+        }
+    }
 
     static class CoreAssembly
     {
