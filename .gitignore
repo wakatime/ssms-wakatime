@@ -74,3 +74,4 @@ bld/
 **/*.Server/ModelManifest.xml
 _Pvt_Extensions
 /ssms-wakatime.xml
+/Location of AddIn.lnk

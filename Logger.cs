@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Text;
 
 namespace WakaTime
 {
@@ -11,7 +13,8 @@ namespace WakaTime
     };
 
     static class Logger
-    {        
+    {
+        static StringBuilder sb = new StringBuilder();
         internal static void Debug(string message)
         {
             if (!WakaTime.Debug)
@@ -38,7 +41,11 @@ namespace WakaTime
         }
 
         private static void Log(LogLevel level, string message)
-        {            
+        {
+            sb.Append(level + ":: " + message);
+            // flush every 20 seconds as you do it
+            File.AppendAllText("./logFiles/log" + DateTime.Today.ToString() +".txt", sb.ToString());
+            sb.Clear();
         }
     }
 }
