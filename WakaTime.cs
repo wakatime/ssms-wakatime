@@ -89,7 +89,7 @@ namespace WakaTime
                     catch (ArgumentException)
                     {
                         //If we are here, then the exception is probably because a command with that name
-                        //  already exists. If so there is no need to recreate the command and we can 
+                        //  already exists. If so there is no need to recreate the command and we can
                         //  safely ignore the exception.
                     }
                 }
@@ -172,7 +172,7 @@ namespace WakaTime
 
         /// <summary>Implements the OnAddInsUpdate method of the IDTExtensibility2 interface. Receives notification when the collection of Add-ins has changed.</summary>
         /// <param term='custom'>Array of parameters that are host application specific.</param>
-        /// <seealso class='IDTExtensibility2' />		
+        /// <seealso class='IDTExtensibility2' />
         public void OnAddInsUpdate(ref Array custom)
         {
         }
@@ -247,7 +247,7 @@ namespace WakaTime
 
             var wakatimeVersion = WakaTimeConstants.CurrentWakaTimeCliVersion();
 
-            return process.Success && process.Error.Equals(wakatimeVersion);            
+            return process.Success && process.Error.Equals(wakatimeVersion);
         }
 
         private static void GetSettings()
