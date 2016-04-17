@@ -26,3 +26,9 @@ Screen Shots
 ------------
 
 ![Project Overview](https://wakatime.com/static/img/ScreenShots/ScreenShot-2014-10-29.png)
+
+Contributing
+------------
+**TO DO**
+
+1. Implement logging
