@@ -1,12 +1,16 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 using EnvDTE;
 using EnvDTE80;
 using Extensibility;
 using Microsoft.VisualStudio.CommandBars;
+using NLog;
+using NLog.Config;
 using WakaTime.Forms;
-using Task = System.Threading.Tasks.Task;
+using Debugger = System.Diagnostics.Debugger;
 
 namespace WakaTime
 {
@@ -34,6 +38,12 @@ namespace WakaTime
         /// <summary>Implements the constructor for the Add-in object. Place your initialization code within this method.</summary>
         public WakaTime()
         {
+            var assemblyFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);            
+            LogManager.Configuration = new XmlLoggingConfiguration(Path.Combine(assemblyFolder, "Nlog.config"), true);
+
+            if (Debugger.IsAttached)
+                LogManager.ThrowExceptions = true;                     
+
             _version = string.Format("{0}.{1}.{2}", CoreAssembly.Version.Major, CoreAssembly.Version.Minor, CoreAssembly.Version.Build);
             _wakaTimeConfigFile = new WakaTimeConfigFile();
         }
@@ -61,24 +71,24 @@ namespace WakaTime
 
                 if (connectMode == ext_ConnectMode.ext_cm_UISetup)
                 {
-                    object[] contextGUIDS = new object[] { };
-                    Commands2 commands = (Commands2)_applicationObject.Commands;
-                    string toolsMenuName = "Tools";
+                    var contextGuids = new object[] { };
+                    var commands = (Commands2)_applicationObject.Commands;
+                    const string toolsMenuName = "Tools";
 
                     //Place the command on the tools menu.
                     //Find the MenuBar command bar, which is the top-level command bar holding all the main menu items:
-                    CommandBar menuBarCommandBar = ((CommandBars)_applicationObject.CommandBars)["MenuBar"];
+                    var menuBarCommandBar = ((CommandBars)_applicationObject.CommandBars)["MenuBar"];
 
                     //Find the Tools command bar on the MenuBar command bar:
-                    CommandBarControl toolsControl = menuBarCommandBar.Controls[toolsMenuName];
-                    CommandBarPopup toolsPopup = (CommandBarPopup)toolsControl;
+                    var toolsControl = menuBarCommandBar.Controls[toolsMenuName];
+                    var toolsPopup = (CommandBarPopup)toolsControl;
 
                     //This try/catch block can be duplicated if you wish to add multiple commands to be handled by your Add-in,
                     //  just make sure you also update the QueryStatus/Exec method to include the new command names.
                     try
                     {
                         //Add a command to the Commands collection:
-                        Command command = commands.AddNamedCommand2(_addInInstance, "WakaTime", "WakaTime", "WakaTime Settings", true, 59, ref contextGUIDS, (int)vsCommandStatus.vsCommandStatusSupported + (int)vsCommandStatus.vsCommandStatusEnabled, (int)vsCommandStyle.vsCommandStylePictAndText, vsCommandControlType.vsCommandControlTypeButton);
+                        var command = commands.AddNamedCommand2(_addInInstance, "WakaTime", "WakaTime", "WakaTime Settings", true, 59, ref contextGuids, (int)vsCommandStatus.vsCommandStatusSupported + (int)vsCommandStatus.vsCommandStatusEnabled, (int)vsCommandStyle.vsCommandStylePictAndText, vsCommandControlType.vsCommandControlTypeButton);
 
                         //Add a control for the command to the tools menu:
                         if ((command != null) && (toolsPopup != null))
@@ -97,8 +107,16 @@ namespace WakaTime
                 // Make sure python is installed
                 if (!PythonManager.IsPythonInstalled())
                 {
-                    var url = PythonManager.PythonDownloadUrl;
-                    Downloader.DownloadPython(url, WakaTimeConstants.UserConfigDir);
+                    var dialogResult = MessageBox.Show(@"Let's download and install Python now?", @"WakaTime requires Python", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    if (dialogResult == DialogResult.Yes)
+                    {
+                        var url = PythonManager.PythonDownloadUrl;
+                        Downloader.DownloadPython(url, WakaTimeConstants.UserConfigDir);
+                    }
+                    else
+                        MessageBox.Show(
+                            @"Please install Python (https://www.python.org/downloads/) and restart Visual Studio to enable the WakaTime plugin.",
+                            @"WakaTime", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
 
                 if (!DoesCliExist() || !IsCliLatestVersion())
@@ -203,8 +221,7 @@ namespace WakaTime
             {
                 if (commandName == "WakaTime")
                 {
-                    status = (vsCommandStatus)vsCommandStatus.vsCommandStatusSupported | vsCommandStatus.vsCommandStatusEnabled;
-                    return;
+                    status = vsCommandStatus.vsCommandStatusSupported | vsCommandStatus.vsCommandStatusEnabled;
                 }
             }
         }
@@ -222,10 +239,7 @@ namespace WakaTime
             if (executeOption == vsCommandExecOption.vsCommandExecOptionDoDefault)
             {
                 if (commandName == "WakaTime")
-                {
                     handled = true;
-                    return;
-                }
             }
         }
 
@@ -247,7 +261,7 @@ namespace WakaTime
 
             var wakatimeVersion = WakaTimeConstants.CurrentWakaTimeCliVersion();
 
-            return process.Success && process.Error.Equals(wakatimeVersion);            
+            return process.Success && process.Error.Equals(wakatimeVersion);
         }
 
         private static void GetSettings()
@@ -285,7 +299,6 @@ namespace WakaTime
             PythonCliParameters.File = fileName;
             PythonCliParameters.Plugin = string.Format("{0}/{1} {2}/{3}", WakaTimeConstants.EditorName, _editorVersion, WakaTimeConstants.PluginName, _version);
             PythonCliParameters.IsWrite = isWrite;
-            //PythonCliParameters.Project = GetProjectName();
 
             var pythonBinary = PythonManager.GetPython();
             if (pythonBinary != null)
@@ -300,6 +313,9 @@ namespace WakaTime
                 }
                 else
                     process.RunInBackground();
+
+                if (!process.Success)
+                    Logger.Error(string.Format("Could not send heartbeat: {0}", process.Error));
             }
             else
                 Logger.Error("Could not send heartbeat because python is not installed");

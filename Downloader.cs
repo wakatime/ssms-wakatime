@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using System.IO.Compression;
 using System.Net;
 
@@ -20,6 +21,12 @@ namespace WakaTime
 
             // Extract wakatime cli zip file
             ZipFile.ExtractToDirectory(localZipFile, dir);
+
+            try
+            {
+                File.Delete(localZipFile);
+            }
+            catch { /* ignored */ }
         }
 
         static public void DownloadPython(string url, string dir)
@@ -46,6 +53,12 @@ namespace WakaTime
             };
 
             Process.Start(procInfo);
+
+            try
+            {
+                File.Delete(localFile);
+            }
+            catch { /* ignored */ }
         }
     }
 }

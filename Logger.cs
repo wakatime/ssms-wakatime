@@ -1,44 +1,35 @@
 using System;
+using NLog;
 
 namespace WakaTime
-{
-    internal enum LogLevel
-    {
-        Debug = 1,
-        Info,
-        Warning,
-        HandledException
-    };
-
+{    
     static class Logger
-    {        
+    {
+        private static readonly NLog.Logger Log = LogManager.GetCurrentClassLogger();
+
         internal static void Debug(string message)
         {
             if (!WakaTime.Debug)
                 return;
 
-            Log(LogLevel.Debug, message);
+            Log.Debug(message);            
         }
 
         internal static void Error(string message, Exception ex = null)
         {
             var exceptionMessage = string.Format("{0}: {1}", message, ex);
 
-            Log(LogLevel.HandledException, exceptionMessage);
+            Log.Error(exceptionMessage);
         }
 
         internal static void Warning(string message)
         {
-            Log(LogLevel.Warning, message);
+            Log.Warn(message);
         }
 
         internal static void Info(string message)
         {
-            Log(LogLevel.Info, message);
-        }
-
-        private static void Log(LogLevel level, string message)
-        {            
-        }
+            Log.Info(message);
+        }        
     }
 }
