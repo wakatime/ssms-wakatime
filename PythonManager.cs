@@ -33,23 +33,29 @@ namespace WakaTime
             {
                 var regex = new Regex(@"""([^""]*)\\([^""\\]+(?:\.[^"".\\]+))""");
                 var pythonKey = Registry.ClassesRoot.OpenSubKey(@"Python.File\shell\open\command");
-                var python = pythonKey.GetValue(null).ToString();
-                var match = regex.Match(python);
+                if (pythonKey != null)
+                {
+                    var python = pythonKey.GetValue(null).ToString();
+                    var match = regex.Match(python);
 
-                if (!match.Success) return null;
+                    if (!match.Success) return null;
 
-                var directory = match.Groups[1].Value;
-                var fullPath = Path.Combine(directory, "pythonw");
-                var process = new RunProcess(fullPath, "--version");
+                    var directory = match.Groups[1].Value;
+                    var fullPath = Path.Combine(directory, "pythonw");
+                    var process = new RunProcess(fullPath, "--version");
 
-                process.Run();
+                    process.Run();
 
-                if (!process.Success)
-                    return null;
+                    if (!process.Success)
+                        return null;
 
-                Logger.Debug(string.Format("Python found by Microsoft Register: {0}", fullPath));
+                    Logger.Debug(string.Format("Python found by Microsoft Register: {0}", fullPath));
 
-                return fullPath;
+                    return fullPath;
+                }
+                
+                Logger.Info("There's no Python path from Micforost Register");
+                return null;
             }
             catch (Exception ex)
             {

@@ -115,7 +115,7 @@ namespace WakaTime
                     }
                     else
                         MessageBox.Show(
-                            @"Please install Python (https://www.python.org/downloads/) and restart Visual Studio to enable the WakaTime plugin.",
+                            @"Please install Python (https://www.python.org/downloads/) and restart SQL Server Management Studio to enable the WakaTime plugin.",
                             @"WakaTime", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
 
