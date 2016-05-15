@@ -7,28 +7,36 @@ WakaTime is a productivity & time tracking tool for programmers. Once the WakaTi
 Installation
 ------------
 
-1. Download WakaTime.dll and Nlog.config
+1. Download WakaTime.dll, NLog.dll and Nlog.config
 
 2. Inside regedit.exe go to -> `HKEY_CURRENT_USER\Software\Microsoft\SQL Server Management Studio\11.0_Config\AutomationOptions\LookInFolders`
 
-3. Copy WakaTime.Addin to one of those folders (I recommend you to copy into `C:\ProgramData\Application Data\Microsoft\MSEnvShared\Addins`)
+3. Copy WakaTime.Addin to one of those folders (I recommend you to copy into `C:\Users\<my username>\AppData\Roaming\Microsoft\MSEnvShared\Addins`)
 
 4. Edit WakaTime.Addin and change the node Extensibility/Addin/Assembly to the full path of WakaTime.dll you downloaded
 
-5. Enter your [api key](https://wakatime.com/settings#apikey), then press `enter`.
+5. Into Nlog.config file you must change two nodes as described below:
+  1. Firstly change the node nlog/targets/target/fileName to the path you want to save logs
+  2. Also change the node nlog/targets/target/archiveFileName to the path you want to archive logs
 
-6. Use SQL Server Management Studio like you normally do and your time will be tracked for you automatically.
+6. Enter your [api key](https://wakatime.com/settings#apikey), then press `enter`.
 
-7. Visit https://wakatime.com to see your logged time.
+7. Use SQL Server Management Studio like you normally do and your time will be tracked for you automatically.
+
+8. Visit https://wakatime.com to see your logged time.
 
 
 Screen Shots
 ------------
 
-![Project Overview](https://wakatime.com/static/img/ScreenShots/ScreenShot-2014-10-29.png)
+![Project Overview](https://wakatime.com/static/img/ScreenShots/Screen-Shot-2016-03-21.png)
+
+
+Supported SQL Server Management Studio Editions
+------------
+* SQL Server Management Studio 2012 (v11)
+* SQL Server Management Studio 2014 (v12)
+
 
 Contributing
 ------------
-**TO DO**
-
-1. Implement logging
