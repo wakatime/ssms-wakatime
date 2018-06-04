@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -59,6 +60,10 @@ namespace WakaTime
 
             try
             {
+
+                //Use TLS 1.2 for connections to secure resources
+                ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
+
                 _applicationObject = (DTE2)application;
                 _addInInstance = (AddIn)addInInst;
 
