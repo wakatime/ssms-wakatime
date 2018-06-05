@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -46,6 +47,10 @@ namespace WakaTime
 
             _version = string.Format("{0}.{1}.{2}", CoreAssembly.Version.Major, CoreAssembly.Version.Minor, CoreAssembly.Version.Build);
             _wakaTimeConfigFile = new WakaTimeConfigFile();
+
+            //Use TLS 1.2 for connections to secure resources
+            ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
+
         }
 
         /// <summary>Implements the OnConnection method of the IDTExtensibility2 interface. Receives notification that the Add-in is being loaded.</summary>
@@ -59,6 +64,7 @@ namespace WakaTime
 
             try
             {
+
                 _applicationObject = (DTE2)application;
                 _addInInstance = (AddIn)addInInst;
 
