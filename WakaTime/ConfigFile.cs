@@ -1,17 +1,18 @@
 ﻿using System;
+using System.IO;
 using System.Text;
 
 namespace WakaTime
 {
-    class WakaTimeConfigFile
+    public class ConfigFile
     {
-        internal string ApiKey { get; set; }
+        internal string ApiKey { get; set; }        
         internal string Proxy { get; set; }
         internal bool Debug { get; set; }
 
         private readonly string _configFilepath;
 
-        internal WakaTimeConfigFile()
+        internal ConfigFile()
         {
             _configFilepath = GetConfigFilePath();
             Read();
@@ -32,8 +33,7 @@ namespace WakaTime
             // ReSharper disable once InvertIf
             if (NativeMethods.GetPrivateProfileString("settings", "debug", "", ret, 2083, _configFilepath) > 0)
             {
-                bool debug;
-                if (bool.TryParse(ret.ToString(), out debug))
+                if (bool.TryParse(ret.ToString(), out var debug))
                     Debug = debug;
             }
         }
@@ -49,8 +49,8 @@ namespace WakaTime
 
         static string GetConfigFilePath()
         {
-            var userHomeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            return userHomeDir + "\\.wakatime.cfg";
+            var homeFolder = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            return Path.Combine(homeFolder, ".wakatime.cfg");
         }
     }
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -14,7 +14,7 @@ namespace WakaTime
             [MarshalAs(UnmanagedType.LPWStr)] string filePath);
 
         [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Auto)]
-        internal static extern UInt32 GetPrivateProfileString(
+        internal static extern uint GetPrivateProfileString(
             [MarshalAs(UnmanagedType.LPWStr)] string section,
             [MarshalAs(UnmanagedType.LPWStr)] string key,
             [MarshalAs(UnmanagedType.LPWStr)] string def,
