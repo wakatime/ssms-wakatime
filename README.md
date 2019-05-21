@@ -34,3 +34,12 @@ Visit https://wakatime.com to see your coding activity.
 * SQL Server Management Studio 2016 (v13)
 * SQL Server Management Studio 2017 (v14)
 * SQL Server Management Studio 2018 RC1 (v15)
+
+## Troubleshooting
+
+If the extension was blocked, try running as administrator.
+
+```xml
+<description>Appid denied the loading of package</description>
+<guid>{52D9C3FF-C893-408E-95E4-D7484EC7FA47}</guid>
+```
