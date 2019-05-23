@@ -6,16 +6,15 @@ namespace WakaTime
 {
     internal static class Constants
     {
-        internal const string PluginName = "visualstudio-wakatime";
-
+        internal const string PluginName = "ssms-wakatime";
         internal static string PluginVersion =
             $"{WakaTimePackage.CoreAssembly.Version.Major}.{WakaTimePackage.CoreAssembly.Version.Minor}.{WakaTimePackage.CoreAssembly.Version.Build}";
-        internal const string EditorName = "visualstudio";
-        internal static string EditorVersion => WakaTimePackage.ObjDte == null ? string.Empty : WakaTimePackage.ObjDte.Version;
 
+        internal const string EditorName = "ssms";
+        internal static string EditorVersion => WakaTimePackage.ObjDte == null ? string.Empty : WakaTimePackage.ObjDte.Version;
         internal const string CliUrl = "https://github.com/wakatime/wakatime/archive/master.zip";
         internal const string CliFolder = @"wakatime-master\wakatime\cli.py";
-        
+
         internal static Func<string> LatestWakaTimeCliVersion = () =>
         {
             var regex = new Regex(@"(__version_info__ = )(\(( ?\'[0-9]+\'\,?){3}\))");
