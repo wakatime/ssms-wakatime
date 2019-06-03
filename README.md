@@ -15,7 +15,7 @@ Metrics, insights, and time tracking automatically generated from your programmi
     * v2014 - `C:\Program Files (x86)\Microsoft SQL Server\120\Tools\Binn\ManagementStudio\Extensions`
     * v2016 - `C:\Program Files (x86)\Microsoft SQL Server\130\Tools\Binn\ManagementStudio\Extensions`
     * v2017 - `C:\Program Files (x86)\Microsoft SQL Server\140\Tools\Binn\ManagementStudio\Extensions`
-    * v2018 - `C:\Program Files (x86)\Microsoft SQL Server\150\Tools\Binn\ManagementStudio\Extensions`
+    * v2018 - `C:\Program Files (x86)\Microsoft SQL Server Management Studio 18\Common7\IDE\Extensions\`
 
 5. Enter your [api key](https://wakatime.com/settings#apikey), then press `enter`.
 
