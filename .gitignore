@@ -98,3 +98,5 @@ _Pvt_Extensions
 *.nuget.props
 *.nuget.targets
 
+_Release
+*.zip

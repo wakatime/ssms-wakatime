@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using Timers = System.Timers;
 using System.Threading;
 using WakaTime.ExtensionUtils;
 using WakaTime.Forms;
@@ -33,15 +32,14 @@ namespace WakaTime
     /// </para>
     /// </remarks>
     [Guid(GuidList.GuidWakaTimePkgString)]
-    [PackageRegistration(UseManagedResourcesOnly = true)]
-    [ProvideService(typeof(WakaTimePackage))]
-    [ProvideAutoLoad(GuidList.GuidWakaTimeUIString)]
+    [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
+    [ProvideService(typeof(WakaTimePackage), IsAsyncQueryable = true)]
+    [ProvideAutoLoad(GuidList.GuidWakaTimeUIString, PackageAutoLoadFlags.BackgroundLoad)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
-    public sealed class WakaTimePackage : Package
+    public sealed class WakaTimePackage : AsyncPackage
     {
         private DTE _dte;
-        private DTEEvents _dteEvents;
         private DocumentEvents _docEvents;
         private WindowEvents _windowEvents;
         private SolutionEvents _solutionEvents;
@@ -54,15 +52,19 @@ namespace WakaTime
         private bool _isBuildRunning;
         private string _solutionName;
 
-        protected override void Initialize()
+        /// <summary>
+        /// Initialization of the package; this method is called right after the package is sited, so this is the place
+        /// where you can put all the initialization code that rely on services provided by VisualStudio.
+        /// </summary>
+        /// <param name="cancellationToken">A cancellation token to monitor for initialization cancellation, which can occur when VS is shutting down.</param>
+        /// <param name="progress">A provider for progress updates.</param>
+        /// <returns>A task representing the async work of package initialization, or an already completed task if there is none. Do not return null from this method.</returns>
+        protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
-            base.Initialize();
+            await base.InitializeAsync(cancellationToken, progress);
 
-            AddSkipLoading();
-
-            _dte = (DTE)GetService(typeof(DTE));
-            _dteEvents = _dte.Events.DTEEvents;
-            _dteEvents.OnStartupComplete += OnOnStartupComplete;
+            var objDte = await GetServiceAsync(typeof(DTE));
+            _dte = objDte as DTE;
 
             var metadata = new Metadata
             {
@@ -77,17 +79,28 @@ namespace WakaTime
 
             _logger.Debug("It will load WakaTime extension");
 
-            Task.Run(() =>
-            {
-                InitializeAsync();
-            });
+            await InitializeAsync(cancellationToken);
+
+            // Prompt for api key if not already set
+            if (string.IsNullOrEmpty(_wakatime.Config.GetSetting("api_key")))
+                PromptApiKey();
         }
 
-        private void InitializeAsync()
+        private async Task InitializeAsync(CancellationToken cancellationToken)
         {
+            if (_dte is null)
+            {
+                _logger.Error("DTE is null");
+                return;
+            }
+
             try
             {
-                Task.Run(async () => await _wakatime.InitializeAsync()).Wait();
+                await _wakatime.InitializeAsync();
+
+                // When initialized asynchronously, the current thread may be a background thread at this point.
+                // Do any initialization that requires the UI thread after switching to the UI thread.
+                await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
                 // Visual Studio Events              
                 _docEvents = _dte.Events.DocumentEvents;
@@ -101,7 +114,7 @@ namespace WakaTime
                 _settingsForm = new SettingsForm(_wakatime.Config, _logger);
 
                 // Add our command handlers for menu (commands must exist in the .vsct file)
-                if (GetService(typeof(IMenuCommandService)) is OleMenuCommandService mcs)
+                if (await GetServiceAsync(typeof(IMenuCommandService)) is OleMenuCommandService mcs)
                 {
                     // Create the command for the menu item.
                     var menuCommandId = new CommandID(new Guid(GuidList.GuidWakaTimeCmdSetString), 0x100);
@@ -127,22 +140,6 @@ namespace WakaTime
             }
         }
 
-        // Call this method from the Initialize method
-        // to add the SkipLoading value back to the registry
-        // 2 seconds after it’s removed by SSMS
-        private void AddSkipLoading()
-        {
-            var timer = new Timers.Timer(2000);
-            timer.Elapsed += (sender, args) =>
-            {
-                timer.Stop();
-
-                var myPackage = UserRegistryRoot.CreateSubKey($@"Packages\{{{GuidList.GuidWakaTimePkgString}}}");
-                myPackage?.SetValue("SkipLoading", 1);
-            };
-            timer.Start();
-        }
-
         private void PromptApiKey()
         {
             _logger.Debug("It will ask for user to input its api key");
@@ -150,13 +147,6 @@ namespace WakaTime
             var form = new ApiKeyForm(_wakatime.Config, _logger);
 
             form.ShowDialog();
-        }
-
-        private void OnOnStartupComplete()
-        {
-            // Prompt for api key if not already set
-            if (string.IsNullOrEmpty(_wakatime.Config.GetSetting("api_key")))
-                PromptApiKey();
         }
 
         private string GetProjectName()
