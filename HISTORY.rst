@@ -1,7 +1,12 @@
-
 History
 -------
 
+
+3.0.0 (2022-02-14)
+++++++++++++++++++
+
+- Fix installation for v18 (build number 15.0.x.x)
+- Update to use WakaTime shared nuget library v4.0.0
 
 2.0.1 (2019-05-23)
 ++++++++++++++++++
@@ -40,4 +45,3 @@ History
 ++++++++++++++++++
 
 - Birth
-
