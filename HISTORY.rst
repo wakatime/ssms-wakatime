@@ -2,6 +2,13 @@ History
 -------
 
 
+4.0.0 (2023-05-28)
+++++++++++++++++++
+
+- Add support for SSMS v19
+- Add support for new api key format with waka_ prefix
+- Update to use WakaTime shared nuget library v4.2.0
+
 3.0.0 (2022-02-14)
 ++++++++++++++++++
 
