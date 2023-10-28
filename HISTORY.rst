@@ -2,6 +2,12 @@ History
 -------
 
 
+4.1.0 (2023-10-28)
+++++++++++++++++++
+
+- Update to use WakaTime shared nuget library v4.2.1
+
+
 4.0.0 (2023-05-28)
 ++++++++++++++++++
 
@@ -9,16 +15,19 @@ History
 - Add support for new api key format with waka_ prefix
 - Update to use WakaTime shared nuget library v4.2.0
 
+
 3.0.0 (2022-02-14)
 ++++++++++++++++++
 
 - Fix installation for v18 (build number 15.0.x.x)
 - Update to use WakaTime shared nuget library v4.0.0
 
+
 2.0.1 (2019-05-23)
 ++++++++++++++++++
 
 - Fix Editor and Plugin name
+
 
 2.0.0 (2019-04-26)
 ++++++++++++++++++
