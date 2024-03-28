@@ -23,6 +23,9 @@ Metrics, insights, and time tracking automatically generated from your programmi
     3. For SSMS `v19`:
         1. Copy the folder `WakaTime.v18` to the desired installation folder:
             * v19 - `C:\Program Files (x86)\Microsoft SQL Server Management Studio 19\Common7\IDE\Extensions\`
+    4. For SSMS `v20`:
+        1. Copy the folder `WakaTime.v18` to the desired installation folder:
+            * v19 - `C:\Program Files (x86)\Microsoft SQL Server Management Studio 20\Common7\IDE\Extensions\`
 
 5. Enter your [api key](https://wakatime.com/settings#apikey), then press `enter`.
 
@@ -41,6 +44,8 @@ Visit <https://wakatime.com> to see your coding activity.
 * SQL Server Management Studio 2016 (build number 13.0.x.x)
 * SQL Server Management Studio 17 (build number 14.0.x.x)
 * SQL Server Management Studio 18 (build number 15.0.x.x)
+* SQL Server Management Studio 19 (build number 19.0.x.x)
+* SQL Server Management Studio 20 (build number 20.0.x.x)
 
 ## Troubleshooting
 
