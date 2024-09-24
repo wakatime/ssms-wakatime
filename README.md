@@ -6,11 +6,13 @@ Metrics, insights, and time tracking automatically generated from your programmi
 
 1. Download the latest release <https://github.com/gandarez/ssms-wakatime/releases/latest>.
 
-2. Unzip the content.
+2. Right click the downloaded zip file, click `Properties`, click `Unblock`.
 
-3. Run `AddPackage.bat` to add WakaTime extension into registry white list.
+3. Unzip the content.
 
-4. Manual instructions:
+4. Run `AddPackage.bat` to add WakaTime extension into registry white list.
+
+5. Manual instructions:
     1. For legacy versions before `v18`:
         1. Copy the folder `WakaTime` to the desired installation folder(s):
             * v2012 - `C:\Program Files (x86)\Microsoft SQL Server\110\Tools\Binn\ManagementStudio\Extensions`
@@ -27,9 +29,9 @@ Metrics, insights, and time tracking automatically generated from your programmi
         1. Copy the folder `WakaTime.v18` to the desired installation folder:
             * v19 - `C:\Program Files (x86)\Microsoft SQL Server Management Studio 20\Common7\IDE\Extensions\`
 
-5. Enter your [api key](https://wakatime.com/settings#apikey), then press `enter`.
+6. Enter your [api key](https://wakatime.com/settings#apikey), then press `enter`.
 
-6. Use SSMS and your coding activity will be displayed on your [WakaTime dashboard](https://wakatime.com).
+7. Use SSMS and your coding activity will be displayed on your [WakaTime dashboard](https://wakatime.com).
 
 ## Usage
 
