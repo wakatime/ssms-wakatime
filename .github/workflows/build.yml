@@ -1,0 +1,46 @@
+name: Build SSMS22 VSIX
+
+on:
+  push:
+    branches: [master, ssms22-support]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    # windows-2022 ships Visual Studio 2022 (MSBuild 17), which the
+    # .NET Framework 4.8 / VSSDK project needs. VSSDK.BuildTools comes from NuGet.
+    runs-on: windows-2022
+    env:
+      PROJECT: SSMS22/SSMS22.csproj
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Restore
+        run: msbuild $env:PROJECT /t:Restore /p:Configuration=Release
+
+      - name: Build VSIX
+        run: msbuild $env:PROJECT /p:Configuration=Release /p:DeployExtension=false /v:minimal
+
+      - name: Locate VSIX
+        id: vsix
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem SSMS22/bin/Release -Filter *.vsix
+          if (-not $files) { throw "No .vsix produced in SSMS22/bin/Release" }
+          $files | ForEach-Object { Write-Host "Built $($_.FullName)" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WakaTime.SSMS22.vsix
+          path: SSMS22/bin/Release/*.vsix
+          if-no-files-found: error
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: SSMS22/bin/Release/*.vsix
