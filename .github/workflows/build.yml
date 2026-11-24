@@ -22,6 +22,19 @@ jobs:
       - name: Restore
         run: msbuild $env:PROJECT /t:Restore /p:Configuration=Release
 
+      - name: Stamp build version
+        # Give each CI build a unique VSIX version (4.2.<run>) so VSIXInstaller treats it as
+        # an upgrade instead of "already installed".
+        shell: pwsh
+        run: |
+          $v = "4.2.${{ github.run_number }}"
+          $m = 'SSMS22/source.extension.vsixmanifest'
+          (Get-Content $m -Raw) -replace '(<Identity [^>]*Version=")[^"]+', "`${1}$v" | Set-Content $m -Encoding utf8
+          $a = 'SSMS22/Properties/AssemblyInfo.cs'
+          (Get-Content $a -Raw) -replace 'Version\("4\.2\.0"\)', "Version(`"$v`")" | Set-Content $a -Encoding utf8
+          Select-String -Path $m -Pattern '<Identity'
+          Select-String -Path $a -Pattern 'AssemblyVersion'
+
       - name: Build VSIX
         run: msbuild $env:PROJECT /p:Configuration=Release /p:DeployExtension=false /v:minimal
 
