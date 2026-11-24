@@ -29,11 +29,12 @@ Metrics, insights, and time tracking automatically generated from your programmi
         1. Copy the folder `WakaTime.v18` to the desired installation folder:
             * v19 - `C:\Program Files (x86)\Microsoft SQL Server Management Studio 20\Common7\IDE\Extensions\`
 
-    5. For SSMS `v22` (64-bit, built from the `SSMS22` project):
-        1. Build `SSMS22` in Visual Studio 2022 (Release). The `.vsix` is in `SSMS22\bin\Release`.
-        2. Unzip the `.vsix` (it is a zip file) into a new folder named `WakaTime.v22` inside:
-            * v22 - `C:\Program Files\Microsoft SQL Server Management Studio 22\Release\Common7\IDE\Extensions\`
-        3. Restart SSMS. (If SSMS was installed to a custom location or the `Preview` channel, use that install folder's `Common7\IDE\Extensions`.)
+    5. For SSMS `v21` and `v22` (64-bit, built from the `SSMS22` project):
+        1. Download `WakaTime.SSMS22.vsix` from the GitHub Actions build, or build `SSMS22` in Visual Studio 2022 (Release).
+        2. Close SSMS. **Do not double-click the `.vsix`**: Windows opens it with Visual Studio's installer, which does not target SSMS.
+        3. From a PowerShell prompt, run `.\Install-SSMS22.ps1 -Vsix .\WakaTime.vsix`. It runs SSMS's own `VSIXInstaller.exe` with `/skuName:ssms /skuVersion:<SSMS version>`.
+        4. Or install manually as administrator: unzip the `.vsix` into `C:\Program Files\Microsoft SQL Server Management Studio 22\Release\Common7\IDE\Extensions\WakaTime`, then run `Ssms.exe /updateconfiguration` from that `Common7\IDE` folder so SSMS picks up the new package. Use only one of the two methods, or the package is registered twice.
+        5. Start SSMS. WakaTime is under **Tools > WakaTime**.
 
 6. Enter your [api key](https://wakatime.com/settings#apikey), then press `enter`.
 

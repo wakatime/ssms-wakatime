@@ -12,8 +12,8 @@
     </Metadata>
 
     <Installation>
-        <!-- SSMS 22: 64-bit, Visual Studio 2022+ shell. -->
-        <InstallationTarget Id="Microsoft.VisualStudio.Ssms" Version="[22.0,)">
+        <!-- SSMS product version range (not the VS shell version): SSMS 21 and 22, 64-bit. -->
+        <InstallationTarget Id="Microsoft.VisualStudio.Ssms" Version="[21.0,23.0)">
             <ProductArchitecture>amd64</ProductArchitecture>
         </InstallationTarget>
     </Installation>

@@ -32,11 +32,24 @@ jobs:
           $files = Get-ChildItem SSMS22/bin/Release -Filter *.vsix
           if (-not $files) { throw "No .vsix produced in SSMS22/bin/Release" }
           $files | ForEach-Object { Write-Host "Built $($_.FullName)" }
+          # Show what is inside, so a missing dll/pkgdef is visible in the log.
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          foreach ($f in $files) {
+            $zip = [IO.Compression.ZipFile]::OpenRead($f.FullName)
+            $zip.Entries | ForEach-Object { Write-Host "  $($_.FullName) ($($_.Length) bytes)" }
+            $names = $zip.Entries.FullName
+            $zip.Dispose()
+            foreach ($req in 'extension.vsixmanifest','WakaTime.dll','WakaTime.pkgdef','WakaTime.Shared.ExtensionUtils.dll') {
+              if ($names -notcontains $req) { throw "VSIX is missing $req" }
+            }
+          }
 
       - uses: actions/upload-artifact@v4
         with:
           name: WakaTime.SSMS22.vsix
-          path: SSMS22/bin/Release/*.vsix
+          path: |
+            SSMS22/bin/Release/*.vsix
+            Install-SSMS22.ps1
           if-no-files-found: error
 
       - name: Attach to release

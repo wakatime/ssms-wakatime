@@ -35,6 +35,9 @@ namespace WakaTime
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [ProvideService(typeof(WakaTimePackage), IsAsyncQueryable = true)]
     [ProvideAutoLoad(GuidList.GuidWakaTimeUIString, PackageAutoLoadFlags.BackgroundLoad)]
+    // GuidWakaTimeUIString is UICONTEXT_NoSolution. Also load once the shell is up, in case
+    // SSMS 22 never activates the no-solution context at startup.
+    [ProvideAutoLoad(Microsoft.VisualStudio.VSConstants.UICONTEXT.ShellInitialized_string, PackageAutoLoadFlags.BackgroundLoad)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     public sealed class WakaTimePackage : AsyncPackage
